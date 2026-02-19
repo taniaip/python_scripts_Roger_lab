@@ -130,7 +130,7 @@ if __name__ == "__main__":
     main()
 
 
-# $ python3 ../motif_pos_ave_finder.py -f filtered_ST7B_all_sequence.fa --motif TGTTTGTT --pmismatch 1
+# $ python3 ../motif_scan_stats.py -f filtered_ST7B_all_sequence.fa --motif TGTTTGTT --pmismatch 1
 # Total_sequences: 5103
 # Sequences with hit (>=1): 4386
 # Hitcount: 4814
@@ -139,7 +139,7 @@ if __name__ == "__main__":
 # Average_end (1-based): 61.753 ± 8.881
 
 
-# $ python3 ../motif_pos_ave_finder.py -f filtered_ST2_ALL_sequence.fa --motif TGTTTGTT --pmismatch 1
+# $ python3 ../motif_scan_stats.py -f filtered_ST2_ALL_sequence.fa --motif TGTTTGTT --pmismatch 1
 # Total_sequences: 5596
 # Sequences with hit (>=1): 4647
 # Hitcount: 4733
@@ -148,7 +148,7 @@ if __name__ == "__main__":
 # Average_end (1-based): 61.776 ± 7.561
 
 
-# $ python3 ../motif_pos_ave_finder.py -f blastoise_filtered_sequence.fa --motif TTGTTTTGTT --pmismatch 1 
+# $ python3 ../motif_scan_stats.py -f blastoise_filtered_sequence.fa --motif TTGTTTTGTT --pmismatch 1 
 # Total_sequences: 2301
 # Sequences with hit (>=1): 984
 # Hitcount: 1000
@@ -158,7 +158,7 @@ if __name__ == "__main__":
 
 
 
-# $ python3 ../motif_pos_ave_finder.py -f Rus-s_filtered_sequence.fa --motif TTGTTTTGTT --pmismatch 1 
+# $ python3 ../motif_scan_stats.py -f Rus-s_filtered_sequence.fa --motif TTGTTTTGTT --pmismatch 1 
 # Total_sequences: 4170
 # Sequences with hit (>=1): 1870
 # Hitcount: 1919
@@ -167,10 +167,46 @@ if __name__ == "__main__":
 # Average_end (1-based): 63.999 ± 14.516
 
 
-# $ python3 ../motif_pos_ave_finder.py -f Hermann_filtered_sequence.fa --motif TTGTTTTGTT --pmismatch 1 
+# $ python3 ../motif_scan_stats.py -f Hermann_filtered_sequence.fa --motif TTGTTTTGTT --pmismatch 1 
 # Total_sequences: 1353
 # Sequences with hit (>=1): 753
 # Hitcount: 782
 # Percent_sequences_with_hit: 55.65%
 # Average_start (1-based): 56.455 ± 12.426
 # Average_end (1-based): 65.455 ± 12.426
+
+# 11:22:20 tania at Tanias-MacBook-Pro in …/02_mini_projects/ST7B  [✘!+?]                                                                             
+# $ python3 ../python_scripts_Roger_lab/motif_scan_stats.py -f filtered_ST7B_has_stop_sequence.fa --motif TGTTTGTT --pmismatch 1
+# Total_sequences: 3610
+# Sequences with hit (>=1): 3233
+# Hitcount: 3630
+# Percent_sequences_with_hit: 89.56%
+# Average_start (1-based): 54.981 ± 8.760
+# Average_end (1-based): 61.981 ± 8.760
+
+# 11:24:05 tania at Tanias-MacBook-Pro in …/02_mini_projects/ST7B  [✘!+?]                                                                             
+# $ python3 ../python_scripts_Roger_lab/motif_scan_stats.py -f filtered_ST7B_non_stop_sequence.fa --motif TGTTTGTT --pmismatch 1
+# Total_sequences: 669
+# Sequences with hit (>=1): 619
+# Hitcount: 628
+# Percent_sequences_with_hit: 92.53%
+# Average_start (1-based): 55.272 ± 5.124
+# Average_end (1-based): 62.272 ± 5.124
+
+# 15:20:54 tania at Tanias-MacBook-Pro in …/02_mini_projects/ST2  [✘!+?]                                              ✦
+# $ python ../python_scripts_Roger_lab/motif_scan_stats.py -f filtered_ST2_has_stop_sequence.fa --motif TGTTTGTT --pmismatch 1
+# Total_sequences: 4276
+# Sequences with hit (>=1): 3576
+# Hitcount: 3641
+# Percent_sequences_with_hit: 83.63%
+# Average_start (1-based): 54.709 ± 7.558
+# Average_end (1-based): 61.709 ± 7.558
+
+# 15:24:53 tania at Tanias-MacBook-Pro in …/02_mini_projects/ST2  [✘!+?]                                              ✦
+# $ python ../python_scripts_Roger_lab/motif_scan_stats.py -f filtered_ST2_non_stop_sequence.fa --motif TGTTTGTT --pmismatch 1
+# Total_sequences: 938
+# Sequences with hit (>=1): 818
+# Hitcount: 822
+# Percent_sequences_with_hit: 87.21%
+# Average_start (1-based): 54.855 ± 6.478
+# Average_end (1-based): 61.855 ± 6.478

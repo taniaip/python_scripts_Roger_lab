@@ -51,7 +51,7 @@ def parse_args():
                         help="title for the output figure.")
     return parser.parse_args()
 
-def extract_polyA_sequences(gff3_file, fasta_file, flank=50):
+def extract_polyA_sequences(gff3_file, fasta_file, flank50):
     sequences = []
 
     fasta_seqs = {record.id: str(record.seq) for record in SeqIO.parse(fasta_file, "fasta")}

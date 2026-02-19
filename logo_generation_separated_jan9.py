@@ -62,6 +62,7 @@ import logomaker
 
 MOTIF = "TGTTTGTT"
 MAX_SUBS = 2
+MAX_SUBS_GAP0 = 0
 
 
 def parse_args():
@@ -82,6 +83,7 @@ def parse_args():
     p.add_argument("--outElse", dest="out_else", required=True, help="Logo output prefix for ELSE sequences.")
 
     # Best-class logos (chosen by least substitutions, then smallest gap)
+    p.add_argument("--out0",  dest="out_0",  required=True, help="Logo output prefix for best-class gap0.")
     p.add_argument("--out1",  dest="out_1",  required=True, help="Logo output prefix for best-class gap1.")
     p.add_argument("--out2",  dest="out_2",  required=True, help="Logo output prefix for best-class gap2.")
     p.add_argument("--out3",  dest="out_3",  required=True, help="Logo output prefix for best-class gap3.")
@@ -94,7 +96,8 @@ def parse_args():
     p.add_argument("--out4b", dest="out_4b", required=True, help="Logo output prefix for best-class 4b (TG).")
     p.add_argument("--out4c", dest="out_4c", required=True, help="Logo output prefix for best-class 4c (TA).")
 
-    # "k_all" logos: pattern_k_all for k = 1..8
+    # "k_all" logos: pattern_k_all for k = 0..8
+    p.add_argument("--out0_all", dest="out_0_all", required=True, help="Logo output prefix for pattern_0_all.")
     p.add_argument("--out1_all", dest="out_1_all", required=True, help="Logo output prefix for pattern_1_all.")
     p.add_argument("--out2_all", dest="out_2_all", required=True, help="Logo output prefix for pattern_2_all.")
     p.add_argument("--out3_all", dest="out_3_all", required=True, help="Logo output prefix for pattern_3_all.")
@@ -118,9 +121,13 @@ def build_candidates():
     Returns list of tuples: (label, gap_size, compiled_regex)
     """
     motif_fuzzy = rf"({MOTIF}){{s<={MAX_SUBS}}}"
+    motif_fuzzy0 = rf"({MOTIF}){{s<={MAX_SUBS_GAP0}}}"
+
     candidates = []
 
     # gap1..8: ^(.{24})(T)([ACGT]{k})(TGTTTGTT){s<=2}
+    candidates.append(("gap0", 0, regex.compile(rf"^(.{{24}})(T)(){motif_fuzzy0}")))
+
     for k in range(1, 9):
         candidates.append((
             f"gap{k}",
@@ -146,6 +153,13 @@ def build_pattern_k_all():
     """
     patterns = {}
     motif_fuzzy = rf"({MOTIF}){{s<={MAX_SUBS}}}"
+    motif_fuzzy0 = rf"({MOTIF}){{s<={MAX_SUBS_GAP0}}}"
+
+    # k = 0 (gap0) with stricter motif allowance
+    # ***Default version was loose for this category and man7 Gap-4s was miscategorized to this group.
+    patterns[0] = regex.compile(
+        rf"^(.{{24}})([ACGT]{{1}})([ACGT]{{0}}){motif_fuzzy0}"
+    )
     for k in range(1, 9):
         patterns[k] = regex.compile(
             rf"^(.{{24}})([ACGT]{{1}})([ACGT]{{{k}}}){motif_fuzzy}"
@@ -164,17 +178,18 @@ def best_motif_class(region_seq, candidates):
     """
     # deterministic tie-break among equal subs and gap
     label_rank = {
-        "gap1": 1,
-        "gap2": 2,
-        "gap3": 3,
-        "4a": 4,
-        "4b": 5,
-        "4c": 6,
-        "gap4": 7,
-        "gap5": 8,
-        "gap6": 9,
-        "gap7": 10,
-        "gap8": 11,
+        "gap0": 1,
+        "gap1": 2,
+        "gap2": 3,
+        "gap3": 4,
+        "4a": 5,
+        "4b": 6,
+        "4c": 7,
+        "gap4": 8,
+        "gap5": 9,
+        "gap6": 10,
+        "gap7": 11,
+        "gap8": 12,
     }
 
     hits = []
@@ -205,12 +220,12 @@ def extract_polyA_sequences(gff3_in, fasta_file, flank=24):
 
     # Best-class buckets
     best = {
-        "gap1": [], "gap2": [], "gap3": [], "gap4": [], "gap5": [], "gap6": [], "gap7": [], "gap8": [],
+         "gap0": [], "gap1": [], "gap2": [], "gap3": [], "gap4": [], "gap5": [], "gap6": [], "gap7": [], "gap8": [],
         "4a": [], "4b": [], "4c": []
     }
 
     # pattern_k_all buckets (k=1..8)
-    sequences_k_all = {k: [] for k in range(1, 9)}
+    sequences_k_all = {k: [] for k in range(0, 9)}
 
     with open(gff3_in, "r") as gf:
         for raw in gf:
@@ -240,26 +255,30 @@ def extract_polyA_sequences(gff3_in, fasta_file, flank=24):
             sequences_all.append(region_seq)
 
             # Fill pattern_k_all (choose smallest k if multiple match)
-            for k in range(1, 9):
+            matched_k_all = False
+            for k in range(0, 9):
                 if pattern_k_all[k].match(region_seq):
                     sequences_k_all[k].append(region_seq)
+                    matched_k_all = True
                     break
 
-            # Best-class classification across all candidate placements
-            label, m, subs = best_motif_class(region_seq, candidates)
-            if label is None:
+            # ELSE is defined by NOT being found in ANY k_all
+            if not matched_k_all:
                 sequences_else.append(region_seq)
                 else_gff_lines.append(line)
-            else:
+
+            # Best-class (T in polyA site) classification 
+            label, m, subs = best_motif_class(region_seq, candidates)
+            if label is not None:
                 best[label].append(region_seq)
 
     # Print summary
     print(f"Total sequences: {len(sequences_all)}")
-    for k in range(1, 9):
+    for k in range(0, 9):
         print(f"pattern_{k}_all matches: {len(sequences_k_all[k])}")
 
     print("Best-class matches:")
-    for k in range(1, 9):
+    for k in range(0, 9):
         print(f"  gap{k}: {len(best[f'gap{k}'])}")
     print(f"  4a: {len(best['4a'])}")
     print(f"  4b: {len(best['4b'])}")
@@ -302,6 +321,7 @@ def main():
     save_logo_logomaker(seq_else, args.out_else)
 
     # Logos: best-class
+    save_logo_logomaker(best["gap0"], args.out_0)
     save_logo_logomaker(best["gap1"], args.out_1)
     save_logo_logomaker(best["gap2"], args.out_2)
     save_logo_logomaker(best["gap3"], args.out_3)
@@ -314,11 +334,8 @@ def main():
     save_logo_logomaker(best["4b"], args.out_4b)
     save_logo_logomaker(best["4c"], args.out_4c)
 
-    print("\nBest-class polyA counts:")
-    for key in ["gap1","gap2","gap3","gap4","gap5","gap6","gap7","gap8","4a","4b","4c"]:
-        print(f"  {key}: {len(best[key])}")
-
-    # Logos: pattern_k_all (k=1..8)
+    # Logos: pattern_k_all (k=0..8)
+    save_logo_logomaker(sequences_k_all[0], args.out_0_all)
     save_logo_logomaker(sequences_k_all[1], args.out_1_all)
     save_logo_logomaker(sequences_k_all[2], args.out_2_all)
     save_logo_logomaker(sequences_k_all[3], args.out_3_all)
@@ -339,12 +356,13 @@ if __name__ == "__main__":
 
 
 #FOR NON-STOP ST2:
-# $ python ../../logo_generation_separated_jan9.py \
+# python ../../python_scripts_Roger_lab/logo_generation_separated_jan9.py \
 #   -g1 ../filtered_non_stop_polyA.gff3 \
-#   -g2 else_polyAs_has_stop_ST2_logo.gff3 \
+#   -g2 else_polyAs_ALL_ST2_logo.gff3 \
 #   -f ../ST2_sorted_masked.fasta \
-#   --outAll ST2_logo_ALL_NON \
+#   --outAll ST2_logo_ALL \
 #   --outElse ST2_logo_else \
+#   --out0 ST2_logo_gap0 \
 #   --out1 ST2_logo_gap1 \
 #   --out2 ST2_logo_gap2 \
 #   --out3 ST2_logo_gap3 \
@@ -356,6 +374,7 @@ if __name__ == "__main__":
 #   --out4a ST2_logo_4a \
 #   --out4b ST2_logo_4b \
 #   --out4c ST2_logo_4c \
+#   --out0_all ST2_logo_0_all \
 #   --out1_all ST2_logo_1_all \
 #   --out2_all ST2_logo_2_all \
 #   --out3_all ST2_logo_3_all \
@@ -364,18 +383,19 @@ if __name__ == "__main__":
 #   --out6_all ST2_logo_6_all \
 #   --out7_all ST2_logo_7_all \
 #   --out8_all ST2_logo_8_all
-
+# Matplotlib is building the font cache; this may take a moment.
 # Total sequences: 938
+# pattern_0_all matches: 1
 # pattern_1_all matches: 8
 # pattern_2_all matches: 4
 # pattern_3_all matches: 35
-# pattern_4_all matches: 843
+# pattern_4_all matches: 842
 # pattern_5_all matches: 11
 # pattern_6_all matches: 4
 # pattern_7_all matches: 0
 # pattern_8_all matches: 1
-
 # Best-class matches:
+#   gap0: 1
 #   gap1: 0
 #   gap2: 3
 #   gap3: 1
@@ -384,20 +404,20 @@ if __name__ == "__main__":
 #   gap6: 0
 #   gap7: 0
 #   gap8: 1
-#   4a: 668
+#   4a: 667
 #   4b: 86
 #   4c: 88
-# else (no match): 87
-
+# else (no match): 32
 
 
 #FOR HAS-STOP ST2:
-# python ../../logo_generation_separated_jan9.py \
-#   -g1 ../filtered_has_stop_polyA.gff3 \ 
-#   -g2 else_polyAs_has_stop_ST2_logo.gff3 \
+# python ../../python_scripts_Roger_lab/logo_generation_separated_jan9.py \
+#   -g1 ../filtered_has_stop_polyA.gff3 \     
+#   -g2 else_polyAs_ALL_ST2_logo.gff3 \
 #   -f ../ST2_sorted_masked.fasta \
-#   --outAll ST2_logo_ALL_HAS \
+#   --outAll ST2_logo_ALL \
 #   --outElse ST2_logo_else \
+#   --out0 ST2_logo_gap0 \
 #   --out1 ST2_logo_gap1 \
 #   --out2 ST2_logo_gap2 \
 #   --out3 ST2_logo_gap3 \
@@ -409,6 +429,7 @@ if __name__ == "__main__":
 #   --out4a ST2_logo_4a \
 #   --out4b ST2_logo_4b \
 #   --out4c ST2_logo_4c \
+#   --out0_all ST2_logo_0_all \
 #   --out1_all ST2_logo_1_all \
 #   --out2_all ST2_logo_2_all \
 #   --out3_all ST2_logo_3_all \
@@ -417,18 +438,19 @@ if __name__ == "__main__":
 #   --out6_all ST2_logo_6_all \
 #   --out7_all ST2_logo_7_all \
 #   --out8_all ST2_logo_8_all
-
+# Matplotlib is building the font cache; this may take a moment.
 # Total sequences: 4277
+# pattern_0_all matches: 8
 # pattern_1_all matches: 126
 # pattern_2_all matches: 77
 # pattern_3_all matches: 340
-# pattern_4_all matches: 3368
+# pattern_4_all matches: 3360
 # pattern_5_all matches: 104
 # pattern_6_all matches: 24
 # pattern_7_all matches: 16
 # pattern_8_all matches: 6
-
 # Best-class matches:
+#   gap0: 4
 #   gap1: 8
 #   gap2: 14
 #   gap3: 11
@@ -437,20 +459,21 @@ if __name__ == "__main__":
 #   gap6: 1
 #   gap7: 2
 #   gap8: 3
-#   4a: 1776
+#   4a: 1772
 #   4b: 356
 #   4c: 209
-# else (no match): 1851
+# else (no match): 216
 
 
 
 # FOR ALL POLYS IN ST2:
-# python logo_generation_separated_jan9.py \
-#   -g1 ST2_filtered_all_polyAs.gff3 \
+# python ../../python_scripts_Roger_lab/logo_generation_separated_jan9.py \
+#   -g1 ../ST2_filtered_all_polyAs.gff3 \
 #   -g2 else_polyAs_ALL_ST2_logo.gff3 \
-#   -f ST2_sorted_masked.fasta \
+#   -f ../ST2_sorted_masked.fasta \
 #   --outAll ST2_logo_ALL \
 #   --outElse ST2_logo_else \
+#   --out0 ST2_logo_gap0 \
 #   --out1 ST2_logo_gap1 \
 #   --out2 ST2_logo_gap2 \
 #   --out3 ST2_logo_gap3 \
@@ -462,6 +485,7 @@ if __name__ == "__main__":
 #   --out4a ST2_logo_4a \
 #   --out4b ST2_logo_4b \
 #   --out4c ST2_logo_4c \
+#   --out0_all ST2_logo_0_all \
 #   --out1_all ST2_logo_1_all \
 #   --out2_all ST2_logo_2_all \
 #   --out3_all ST2_logo_3_all \
@@ -470,19 +494,19 @@ if __name__ == "__main__":
 #   --out6_all ST2_logo_6_all \
 #   --out7_all ST2_logo_7_all \
 #   --out8_all ST2_logo_8_all
-
+# Matplotlib is building the font cache; this may take a moment.
 # Total sequences: 5597
+# pattern_0_all matches: 14
 # pattern_1_all matches: 143
 # pattern_2_all matches: 88
 # pattern_3_all matches: 400
-# pattern_4_all matches: 4435
+# pattern_4_all matches: 4422
 # pattern_5_all matches: 131
 # pattern_6_all matches: 31
 # pattern_7_all matches: 19
 # pattern_8_all matches: 10
-#else: 340
-
 # Best-class matches:
+#   gap0: 10
 #   gap1: 9
 #   gap2: 19
 #   gap3: 13
@@ -491,32 +515,33 @@ if __name__ == "__main__":
 #   gap6: 1
 #   gap7: 2
 #   gap8: 4
-#   4a: 2589
+#   4a: 2580
 #   4b: 461
 #   4c: 310
-# else (no match): 2129
+# else (no match): 339
 
 
 
 #FOR ST7B:
-#FOR ALL CATEGORIES:
-# python ../../logo_generation_separated_jan9.py \
+# python ../../python_scripts_Roger_lab/logo_generation_separated_jan9.py \
 #   -g1 ../filtered_ST7B_all_polyA.gff3 \
 #   -g2 else_polyAs_ALL_ST7B_logo.gff3 \
 #   -f ../Blastocystis_ST7B_Complete_Assembly_pilon_revised.fasta \
 #   --outAll ST7B_logo_ALL \
 #   --outElse ST7B_logo_else \
-#   --out1 ST2_logo_gap1 \
-#   --out2 ST2_logo_gap2 \
-#   --out3 ST2_logo_gap3 \
-#   --out4 ST2_logo_gap4 \
-#   --out5 ST2_logo_gap5 \
-#   --out6 ST2_logo_gap6 \
-#   --out7 ST2_logo_gap7 \
-#   --out8 ST2_logo_gap8 \
-#   --out4a ST2_logo_4a \
-#   --out4b ST2_logo_4b \
-#   --out4c ST2_logo_4c \
+#   --out0 ST7B_logo_gap0 \
+#   --out1 ST7B_logo_gap1 \
+#   --out2 ST7B_logo_gap2 \
+#   --out3 ST7B_logo_gap3 \
+#   --out4 ST7B_logo_gap4 \
+#   --out5 ST7B_logo_gap5 \
+#   --out6 ST7B_logo_gap6 \
+#   --out7 ST7B_logo_gap7 \
+#   --out8 ST7B_logo_gap8 \
+#   --out4a ST7B_logo_4a \
+#   --out4b ST7B_logo_4b \
+#   --out4c ST7B_logo_4c \
+#   --out0_all ST7B_logo_0_all \
 #   --out1_all ST7B_logo_1_all \
 #   --out2_all ST7B_logo_2_all \
 #   --out3_all ST7B_logo_3_all \
@@ -527,15 +552,17 @@ if __name__ == "__main__":
 #   --out8_all ST7B_logo_8_all
 # Matplotlib is building the font cache; this may take a moment.
 # Total sequences: 5103
+# pattern_0_all matches: 129
 # pattern_1_all matches: 257
 # pattern_2_all matches: 151
-# pattern_3_all matches: 452
-# pattern_4_all matches: 3640
+# pattern_3_all matches: 451
+# pattern_4_all matches: 3515
 # pattern_5_all matches: 111
 # pattern_6_all matches: 28
 # pattern_7_all matches: 16
 # pattern_8_all matches: 15
 # Best-class matches:
+#   gap0: 112
 #   gap1: 26
 #   gap2: 7
 #   gap3: 14
@@ -544,29 +571,33 @@ if __name__ == "__main__":
 #   gap6: 8
 #   gap7: 8
 #   gap8: 7
-#   4a: 2630
+#   4a: 2519
 #   4b: 263
 #   4c: 196
-# else (no match): 1882
+# else (no match): 430
 
-# #FOR NON0STOP:
-# python ../../logo_generation_separated_jan9.py \
+
+
+# FOR NON0STOP:
+# python ../../python_scripts_Roger_lab/logo_generation_separated_jan9.py \
 #   -g1 ../filtered_ST7B_non_stop_polyA.gff3 \
-#   -g2 else_polyAs_non_stop_ST7B_logo.gff3 \
+#   -g2 else_polyAs_ALL_ST7B_logo.gff3 \
 #   -f ../Blastocystis_ST7B_Complete_Assembly_pilon_revised.fasta \
-#   --outAll ST7B_logo_ALL_NON \
+#   --outAll ST7B_logo_ALL \
 #   --outElse ST7B_logo_else \
-#   --out1 ST2_logo_gap1 \
-#   --out2 ST2_logo_gap2 \
-#   --out3 ST2_logo_gap3 \
-#   --out4 ST2_logo_gap4 \
-#   --out5 ST2_logo_gap5 \
-#   --out6 ST2_logo_gap6 \
-#   --out7 ST2_logo_gap7 \
-#   --out8 ST2_logo_gap8 \
-#   --out4a ST2_logo_4a \
-#   --out4b ST2_logo_4b \
-#   --out4c ST2_logo_4c \
+#   --out0 ST7B_logo_gap0 \
+#   --out1 ST7B_logo_gap1 \
+#   --out2 ST7B_logo_gap2 \
+#   --out3 ST7B_logo_gap3 \
+#   --out4 ST7B_logo_gap4 \
+#   --out5 ST7B_logo_gap5 \
+#   --out6 ST7B_logo_gap6 \
+#   --out7 ST7B_logo_gap7 \
+#   --out8 ST7B_logo_gap8 \
+#   --out4a ST7B_logo_4a \
+#   --out4b ST7B_logo_4b \
+#   --out4c ST7B_logo_4c \
+#   --out0_all ST7B_logo_0_all \
 #   --out1_all ST7B_logo_1_all \
 #   --out2_all ST7B_logo_2_all \
 #   --out3_all ST7B_logo_3_all \
@@ -577,15 +608,17 @@ if __name__ == "__main__":
 #   --out8_all ST7B_logo_8_all
 # Matplotlib is building the font cache; this may take a moment.
 # Total sequences: 669
+# pattern_0_all matches: 2
 # pattern_1_all matches: 17
 # pattern_2_all matches: 0
 # pattern_3_all matches: 29
-# pattern_4_all matches: 598
+# pattern_4_all matches: 596
 # pattern_5_all matches: 8
 # pattern_6_all matches: 0
 # pattern_7_all matches: 0
 # pattern_8_all matches: 0
 # Best-class matches:
+#   gap0: 2
 #   gap1: 1
 #   gap2: 0
 #   gap3: 0
@@ -594,10 +627,13 @@ if __name__ == "__main__":
 #   gap6: 0
 #   gap7: 0
 #   gap8: 0
-#   4a: 573
+#   4a: 571
 #   4b: 11
 #   4c: 24
-# else (no match): 56
+# else (no match): 17
+
+
+
 
 # #FOR HAS STOP:
 # $ python ../../logo_generation_separated_jan9.py \
@@ -606,17 +642,17 @@ if __name__ == "__main__":
 #   -f ../Blastocystis_ST7B_Complete_Assembly_pilon_revised.fasta \
 #   --outAll ST7B_logo_ALL_HAS \
 #   --outElse ST7B_logo_else \
-#   --out1 ST2_logo_gap1 \
-#   --out2 ST2_logo_gap2 \
-#   --out3 ST2_logo_gap3 \
-#   --out4 ST2_logo_gap4 \
-#   --out5 ST2_logo_gap5 \
-#   --out6 ST2_logo_gap6 \
-#   --out7 ST2_logo_gap7 \
-#   --out8 ST2_logo_gap8 \
-#   --out4a ST2_logo_4a \
-#   --out4b ST2_logo_4b \
-#   --out4c ST2_logo_4c \
+#   --out1 ST7B_logo_gap1 \
+#   --out2 ST7B_logo_gap2 \
+#   --out3 ST7B_logo_gap3 \
+#   --out4 ST7B_logo_gap4 \
+#   --out5 ST7B_logo_gap5 \
+#   --out6 ST7B_logo_gap6 \
+#   --out7 ST7B_logo_gap7 \
+#   --out8 ST7B_logo_gap8 \
+#   --out4a ST7B_logo_4a \
+#   --out4b ST7B_logo_4b \
+#   --out4c ST7B_logo_4c \
 #   --out1_all ST7B_logo_1_all \
 #   --out2_all ST7B_logo_2_all \
 #   --out3_all ST7B_logo_3_all \
@@ -650,6 +686,44 @@ if __name__ == "__main__":
 # else (no match): 1382
 
 
+# Sequence Logo for All PolyA Sites in ST7B (n=5103)
+# Sequence Logo for Has-Stop PolyA Sites in ST7B (n=3610)
+# Sequence Logo for Non-Stop PolyA Sites in ST7B (n=669)
+# Sequence Logo for Within-Genes PolyA Sites in ST7B (n=532)
+# Sequence Logo for PolyA Sites Unmatched to any Genes in ST7B (n=292)
+
+
+# Sequence Logo for All PolyA Sites in ST2 (n=5597)
+# Sequence Logo for Has-Stop PolyA Sites in ST2 (n=4277)
+# Sequence Logo for Non-Stop PolyA Sites in ST2 (n=938)
+# Sequence Logo for Within-Genes PolyA Sites in ST2 (n=250)
+# Sequence Logo for PolyA Sites Unmatched to any Genes in ST2 (n=132)
+
+
+# Sequence Logo for All PolyA Sites in ST7B (n=5103)
+# Sequence Logo for PolyA Sites with no gaps in ST7B (n=129)
+# Sequence Logo for PolyA Sites with 1-nt gap in ST7B (n=257)
+# Sequence Logo for PolyA Sites with 2-nt gaps in ST7B (n=151)
+# Sequence Logo for PolyA Sites with 3-nt gaps in ST7B (n=451)
+# Sequence Logo for PolyA Sites with 4-nt gaps in ST7B (n=3515)
+# Sequence Logo for PolyA Sites with 5-nt gaps in ST7B (n=111)
+# Sequence Logo for PolyA Sites with 6-nt gaps in ST7B (n=28)
+# Sequence Logo for PolyA Sites with 7-nt gaps in ST7B (n=16)
+# Sequence Logo for PolyA Sites with 8-nt gaps in ST7B (n=15)
+# Sequence Logo for Uncategorized PolyA Sites in ST7B (n=430) 
+
+
+# Sequence Logo for All PolyA Sites in ST2 (n=5597)
+# Sequence Logo for PolyA Sites with no gaps in ST2 (n=14)
+# Sequence Logo for PolyA Sites with 1-nt gap in ST2 (n=143)
+# Sequence Logo for PolyA Sites with 2-nt gaps in ST2 (n=88)
+# Sequence Logo for PolyA Sites with 3-nt gaps in ST2 (n=400)
+# Sequence Logo for PolyA Sites with 4-nt gaps in ST2 (n=4422)
+# Sequence Logo for PolyA Sites with 5-nt gaps in ST2 (n=131)
+# Sequence Logo for PolyA Sites with 6-nt gaps in ST2 (n=31)
+# Sequence Logo for PolyA Sites with 7-nt gaps in ST2 (n=19)
+# Sequence Logo for PolyA Sites with 8-nt gaps in ST2 (n=10)
+# Sequence Logo for Uncategorized PolyA Sites in ST2 (n=339)
 
 
 ########################################################################################################

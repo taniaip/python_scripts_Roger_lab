@@ -87,14 +87,18 @@ def main() -> None:
     gene_intervals: List[Interval] = process_gene_intervals(db_genes)
     UTR_lengths_list: List[int] = find_UTR_lengths(gene_intervals, db_polyA, sequences)
 
+    print(f"The mean of the UTR lengths: {sum(UTR_lengths_list)/len(UTR_lengths_list)}")
+
     UTR_lengths_series = pd.Series(UTR_lengths_list, name="UTR Length")
 
     plot = sns.histplot(
         UTR_lengths_series,
-        bins=1000,
+        bins=200,
         kde=False
     )
-    plot.set_xlim(-50, 400)
+    plot.set_xlim(3, 400)
+    # plot.set_ylim(0, 100)
+
     plot.get_figure().savefig("UTR_length_distribution.jpg", dpi=300)
 
 

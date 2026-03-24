@@ -51,6 +51,169 @@ Dependencies:
 
 Author: Tania Iranpour
 """
+###################################   FOR ST2    ###############################################
+# Total sequences: 5597
+# pattern_0_all matches: 14
+# pattern_1_all matches: 13
+# pattern_2_all matches: 28
+# pattern_3_all matches: 293
+# pattern_4_all matches: 3933
+# pattern_5_all matches: 96
+# pattern_6_all matches: 28
+# pattern_7_all matches: 14
+# pattern_8_all matches: 8
+# else (no match): 1170
+###
+# Best-class matches:
+#   gap0: 10
+#   gap1: 1
+#   gap2: 2
+#   gap3: 6
+#   gap4: 0
+#   gap5: 38
+#   gap6: 1
+#   gap7: 1
+#   gap8: 2
+#   4a: 2226
+#   4b: 409
+#   4c: 264
+
+
+# Total sequences: 4277
+# pattern_0_all matches: 8
+# pattern_1_all matches: 11
+# pattern_2_all matches: 27
+# pattern_3_all matches: 254
+# pattern_4_all matches: 3010
+# pattern_5_all matches: 80
+# pattern_6_all matches: 20
+# pattern_7_all matches: 9
+# pattern_8_all matches: 6
+# else (no match): 852
+###
+# Best-class matches:
+#   gap0: 4
+#   gap1: 1
+#   gap2: 2
+#   gap3: 5
+#   gap4: 0
+#   gap5: 31
+#   gap6: 1
+#   gap7: 1
+#   gap8: 2
+#   4a: 1524
+#   4b: 319
+#   4c: 177
+
+
+# Total sequences: 938
+# pattern_0_all matches: 1
+# pattern_1_all matches: 0
+# pattern_2_all matches: 0
+# pattern_3_all matches: 24
+# pattern_4_all matches: 760
+# pattern_5_all matches: 10
+# pattern_6_all matches: 4
+# pattern_7_all matches: 0
+# pattern_8_all matches: 0
+# else (no match): 139
+###
+# Best-class matches:
+#   gap0: 1
+#   gap1: 0
+#   gap2: 0
+#   gap3: 1
+#   gap4: 0
+#   gap5: 2
+#   gap6: 0
+#   gap7: 0
+#   gap8: 0
+#   4a: 601
+#   4b: 78
+#   4c: 75
+
+
+
+###################################   FOR ST7B    ###############################################
+
+# Total sequences: 5103
+# pattern_0_all matches: 129
+# pattern_1_all matches: 57
+# pattern_2_all matches: 86
+# pattern_3_all matches: 357
+# pattern_4_all matches: 3295
+# pattern_5_all matches: 100
+# pattern_6_all matches: 13
+# pattern_7_all matches: 14
+# pattern_8_all matches: 11
+# else (no match): 1041
+###
+# Best-class matches:
+#   gap0: 112
+#   gap1: 10
+#   gap2: 0
+#   gap3: 8
+#   gap4: 0
+#   gap5: 44
+#   gap6: 4
+#   gap7: 4
+#   gap8: 6
+#   4a: 2250
+#   4b: 235
+#   4c: 171
+
+
+# Total sequences: 3610
+# pattern_0_all matches: 115
+# pattern_1_all matches: 38
+# pattern_2_all matches: 75
+# pattern_3_all matches: 291
+# pattern_4_all matches: 2374
+# pattern_5_all matches: 82
+# pattern_6_all matches: 11
+# pattern_7_all matches: 13
+# pattern_8_all matches: 9
+# else (no match): 602
+###
+# Best-class matches:
+#   gap0: 98
+#   gap1: 6
+#   gap2: 0
+#   gap3: 4
+#   gap4: 0
+#   gap5: 36
+#   gap6: 4
+#   gap7: 4
+#   gap8: 6
+#   4a: 1464
+#   4b: 207
+#   4c: 133
+
+# Total sequences: 669
+# pattern_0_all matches: 2
+# pattern_1_all matches: 2
+# pattern_2_all matches: 0
+# pattern_3_all matches: 27
+# pattern_4_all matches: 569
+# pattern_5_all matches: 7
+# pattern_6_all matches: 0
+# pattern_7_all matches: 0
+# pattern_8_all matches: 0
+# else (no match): 62
+###
+# Best-class matches:
+#   gap0: 2
+#   gap1: 1
+#   gap2: 0
+#   gap3: 0
+#   gap4: 0
+#   gap5: 3
+#   gap6: 0
+#   gap7: 0
+#   gap8: 0
+#   4a: 534
+#   4b: 10
+#   4c: 22
 
 import argparse
 import regex
@@ -60,8 +223,11 @@ import matplotlib.pyplot as plt
 import logomaker
 
 
-MOTIF = "TGTTTGTT"
-MAX_SUBS = 2
+MOTIF_DNA = "TGTTTGTT"
+MOTIF = MOTIF_DNA.replace("T", "U")   # RNA motif: UGUUUGUU
+ALPHABET = "ACGU"
+
+MAX_SUBS = 1
 MAX_SUBS_GAP0 = 0
 
 
@@ -125,21 +291,22 @@ def build_candidates():
 
     candidates = []
 
-    # gap1..8: ^(.{24})(T)([ACGT]{k})(TGTTTGTT){s<=2}
-    candidates.append(("gap0", 0, regex.compile(rf"^(.{{24}})(T)(){motif_fuzzy0}")))
+    # gap0 (stricter substitutions)
+    candidates.append(("gap0", 0, regex.compile(rf"^(.{{24}})(U)(){motif_fuzzy0}")))
 
+    # gap1..8
     for k in range(1, 9):
         candidates.append((
             f"gap{k}",
             k,
-            regex.compile(rf"^(.{{24}})(T)([ACGT]{{{k}}}){motif_fuzzy}")
+            regex.compile(rf"^(.{{24}})(U)([{ALPHABET}]{{{k}}}){motif_fuzzy}")
         ))
 
     # Special 4-gap variants
     candidates.extend([
-        ("4a", 4, regex.compile(rf"^(.{{24}})(T)([ACGT]{{4}}){motif_fuzzy}")),
-        ("4b", 4, regex.compile(rf"^(.{{23}})(TG)([ACGT]{{4}}){motif_fuzzy}")),
-        ("4c", 4, regex.compile(rf"^(.{{23}})(TA)([ACGT]{{4}}){motif_fuzzy}")),
+        ("4a", 4, regex.compile(rf"^(.{{24}})(U)([{ALPHABET}]{{4}}){motif_fuzzy}")),
+        ("4b", 4, regex.compile(rf"^(.{{23}})(UG)([{ALPHABET}]{{4}}){motif_fuzzy}")),
+        ("4c", 4, regex.compile(rf"^(.{{23}})(UA)([{ALPHABET}]{{4}}){motif_fuzzy}")),
     ])
 
     return candidates
@@ -148,22 +315,23 @@ def build_candidates():
 def build_pattern_k_all():
     """
     pattern_k_all[k] matches:
-      ^(.{24})([ACGT]{1})([ACGT]{k})(TGTTTGTT){s<=2}
-    for k = 1..8
+      ^(.{24})([ACGU]{1})([ACGU]{k})(UGUUUGUU){s<=...}
+    for k = 0..8
     """
     patterns = {}
     motif_fuzzy = rf"({MOTIF}){{s<={MAX_SUBS}}}"
     motif_fuzzy0 = rf"({MOTIF}){{s<={MAX_SUBS_GAP0}}}"
 
     # k = 0 (gap0) with stricter motif allowance
-    # ***Default version was loose for this category and man7 Gap-4s was miscategorized to this group.
     patterns[0] = regex.compile(
-        rf"^(.{{24}})([ACGT]{{1}})([ACGT]{{0}}){motif_fuzzy0}"
+        rf"^(.{{24}})([{ALPHABET}]{{1}})([{ALPHABET}]{{0}}){motif_fuzzy0}"
     )
+
     for k in range(1, 9):
         patterns[k] = regex.compile(
-            rf"^(.{{24}})([ACGT]{{1}})([ACGT]{{{k}}}){motif_fuzzy}"
+            rf"^(.{{24}})([{ALPHABET}]{{1}})([{ALPHABET}]{{{k}}}){motif_fuzzy}"
         )
+
     return patterns
 
 
@@ -249,8 +417,12 @@ def extract_polyA_sequences(gff3_in, fasta_file, flank=24):
             full_seq = fasta_seqs[seqid]
             region_seq = full_seq[max(0, start_0based - flank): start_0based + flank + 1].upper()
 
+            # Reverse-complement on DNA first (safe), then convert to RNA
             if strand == "-":
                 region_seq = str(Seq(region_seq).reverse_complement())
+
+            # Convert DNA -> RNA for matching + logos
+            region_seq = region_seq.replace("T", "U")
 
             sequences_all.append(region_seq)
 
@@ -353,6 +525,309 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# import argparse
+# import regex
+# from Bio import SeqIO
+# from Bio.Seq import Seq
+# import matplotlib.pyplot as plt
+# import logomaker
+
+
+# MOTIF = "TGTTTGTT"
+# MAX_SUBS = 1
+# MAX_SUBS_GAP0 = 0
+
+
+# def parse_args():
+#     p = argparse.ArgumentParser(
+#         description="Extract polyA-centered sequences, classify by best motif placement, and generate logos."
+#     )
+#     p.add_argument("-g1", "--gff3_in", dest="gff3_in", required=True,
+#                    help="Input GFF3 file with polyA site info (feature type must be 'polyA').")
+#     p.add_argument("-g2", "--gff3_else", dest="gff3_else", required=True,
+#                    help="Output GFF3 for sequences that do not match any candidate (else).")
+#     p.add_argument("-f", "--fasta", dest="fasta_file", required=True,
+#                    help="Input FASTA file of genomic sequences (seqid must match GFF3 column 1).")
+#     p.add_argument("--flank", type=int, default=24,
+#                    help="Number of bases upstream/downstream to extract around polyA site (default: 24).")
+
+#     # Logos for all sequences and else
+#     p.add_argument("--outAll",  dest="out_all",  required=True, help="Logo output prefix for ALL sequences.")
+#     p.add_argument("--outElse", dest="out_else", required=True, help="Logo output prefix for ELSE sequences.")
+
+#     # Best-class logos (chosen by least substitutions, then smallest gap)
+#     p.add_argument("--out0",  dest="out_0",  required=True, help="Logo output prefix for best-class gap0.")
+#     p.add_argument("--out1",  dest="out_1",  required=True, help="Logo output prefix for best-class gap1.")
+#     p.add_argument("--out2",  dest="out_2",  required=True, help="Logo output prefix for best-class gap2.")
+#     p.add_argument("--out3",  dest="out_3",  required=True, help="Logo output prefix for best-class gap3.")
+#     p.add_argument("--out4",  dest="out_4",  required=True, help="Logo output prefix for best-class gap4.")
+#     p.add_argument("--out5",  dest="out_5",  required=True, help="Logo output prefix for best-class gap5.")
+#     p.add_argument("--out6",  dest="out_6",  required=True, help="Logo output prefix for best-class gap6.")
+#     p.add_argument("--out7",  dest="out_7",  required=True, help="Logo output prefix for best-class gap7.")
+#     p.add_argument("--out8",  dest="out_8",  required=True, help="Logo output prefix for best-class gap8.")
+#     p.add_argument("--out4a", dest="out_4a", required=True, help="Logo output prefix for best-class 4a (just T).")
+#     p.add_argument("--out4b", dest="out_4b", required=True, help="Logo output prefix for best-class 4b (TG).")
+#     p.add_argument("--out4c", dest="out_4c", required=True, help="Logo output prefix for best-class 4c (TA).")
+
+#     # "k_all" logos: pattern_k_all for k = 0..8
+#     p.add_argument("--out0_all", dest="out_0_all", required=True, help="Logo output prefix for pattern_0_all.")
+#     p.add_argument("--out1_all", dest="out_1_all", required=True, help="Logo output prefix for pattern_1_all.")
+#     p.add_argument("--out2_all", dest="out_2_all", required=True, help="Logo output prefix for pattern_2_all.")
+#     p.add_argument("--out3_all", dest="out_3_all", required=True, help="Logo output prefix for pattern_3_all.")
+#     p.add_argument("--out4_all", dest="out_4_all", required=True, help="Logo output prefix for pattern_4_all.")
+#     p.add_argument("--out5_all", dest="out_5_all", required=True, help="Logo output prefix for pattern_5_all.")
+#     p.add_argument("--out6_all", dest="out_6_all", required=True, help="Logo output prefix for pattern_6_all.")
+#     p.add_argument("--out7_all", dest="out_7_all", required=True, help="Logo output prefix for pattern_7_all.")
+#     p.add_argument("--out8_all", dest="out_8_all", required=True, help="Logo output prefix for pattern_8_all.")
+
+#     return p.parse_args()
+
+
+# def build_candidates():
+#     """
+#     Candidate placements that compete for the ONE best classification per sequence.
+#     Ranking rule:
+#       1) fewest substitutions vs motif
+#       2) if tie, smallest gap
+#       3) if tie, deterministic label order
+
+#     Returns list of tuples: (label, gap_size, compiled_regex)
+#     """
+#     motif_fuzzy = rf"({MOTIF}){{s<={MAX_SUBS}}}"
+#     motif_fuzzy0 = rf"({MOTIF}){{s<={MAX_SUBS_GAP0}}}"
+
+#     candidates = []
+
+#     # gap1..8: ^(.{24})(T)([ACGT]{k})(TGTTTGTT){s<=2}
+#     candidates.append(("gap0", 0, regex.compile(rf"^(.{{24}})(T)(){motif_fuzzy0}")))
+
+#     for k in range(1, 9):
+#         candidates.append((
+#             f"gap{k}",
+#             k,
+#             regex.compile(rf"^(.{{24}})(T)([ACGT]{{{k}}}){motif_fuzzy}")
+#         ))
+
+#     # Special 4-gap variants
+#     candidates.extend([
+#         ("4a", 4, regex.compile(rf"^(.{{24}})(T)([ACGT]{{4}}){motif_fuzzy}")),
+#         ("4b", 4, regex.compile(rf"^(.{{23}})(TG)([ACGT]{{4}}){motif_fuzzy}")),
+#         ("4c", 4, regex.compile(rf"^(.{{23}})(TA)([ACGT]{{4}}){motif_fuzzy}")),
+#     ])
+
+#     return candidates
+
+
+# def build_pattern_k_all():
+#     """
+#     pattern_k_all[k] matches:
+#       ^(.{24})([ACGT]{1})([ACGT]{k})(TGTTTGTT){s<=2}
+#     for k = 1..8
+#     """
+#     patterns = {}
+#     motif_fuzzy = rf"({MOTIF}){{s<={MAX_SUBS}}}"
+#     motif_fuzzy0 = rf"({MOTIF}){{s<={MAX_SUBS_GAP0}}}"
+
+#     # k = 0 (gap0) with stricter motif allowance
+#     # ***Default version was loose for this category and man7 Gap-4s was miscategorized to this group.
+#     patterns[0] = regex.compile(
+#         rf"^(.{{24}})([ACGT]{{1}})([ACGT]{{0}}){motif_fuzzy0}"
+#     )
+#     for k in range(1, 9):
+#         patterns[k] = regex.compile(
+#             rf"^(.{{24}})([ACGT]{{1}})([ACGT]{{{k}}}){motif_fuzzy}"
+#         )
+#     return patterns
+
+
+# def best_motif_class(region_seq, candidates):
+#     """
+#     Return best label based on:
+#       - minimum substitutions (m.fuzzy_counts[0])
+#       - then smaller gap
+#       - then deterministic label ranking
+
+#     Returns: (label, match_obj, subs) or (None, None, None)
+#     """
+#     # deterministic tie-break among equal subs and gap
+#     label_rank = {
+#         "gap0": 1,
+#         "gap1": 2,
+#         "gap2": 3,
+#         "gap3": 4,
+#         "4a": 5,
+#         "4b": 6,
+#         "4c": 7,
+#         "gap4": 8,
+#         "gap5": 9,
+#         "gap6": 10,
+#         "gap7": 11,
+#         "gap8": 12,
+#     }
+
+#     hits = []
+#     for label, gap_size, pat in candidates:
+#         m = pat.match(region_seq)
+#         if not m:
+#             continue
+#         subs, ins, dels = m.fuzzy_counts  # substitutions, insertions, deletions
+#         hits.append((subs, gap_size, label_rank.get(label, 999), label, m))
+
+#     if not hits:
+#         return None, None, None
+
+#     hits.sort(key=lambda x: (x[0], x[1], x[2]))
+#     subs, gap_size, _, label, m = hits[0]
+#     return label, m, subs
+
+
+# def extract_polyA_sequences(gff3_in, fasta_file, flank=24):
+#     fasta_seqs = {rec.id: str(rec.seq) for rec in SeqIO.parse(fasta_file, "fasta")}
+
+#     candidates = build_candidates()
+#     pattern_k_all = build_pattern_k_all()
+
+#     sequences_all = []
+#     sequences_else = []
+#     else_gff_lines = []
+
+#     # Best-class buckets
+#     best = {
+#          "gap0": [], "gap1": [], "gap2": [], "gap3": [], "gap4": [], "gap5": [], "gap6": [], "gap7": [], "gap8": [],
+#         "4a": [], "4b": [], "4c": []
+#     }
+
+#     # pattern_k_all buckets (k=1..8)
+#     sequences_k_all = {k: [] for k in range(0, 9)}
+
+#     with open(gff3_in, "r") as gf:
+#         for raw in gf:
+#             line = raw.strip()
+#             if not line or line.startswith("#"):
+#                 continue
+
+#             parts = line.split("\t")
+#             if len(parts) < 9:
+#                 continue
+#             if parts[2] != "polyA":
+#                 continue
+
+#             seqid = parts[0]
+#             if seqid not in fasta_seqs:
+#                 continue
+
+#             start_0based = int(parts[3]) - 1
+#             strand = parts[6]
+
+#             full_seq = fasta_seqs[seqid]
+#             region_seq = full_seq[max(0, start_0based - flank): start_0based + flank + 1].upper()
+
+#             if strand == "-":
+#                 region_seq = str(Seq(region_seq).reverse_complement())
+
+#             sequences_all.append(region_seq)
+
+#             # Fill pattern_k_all (choose smallest k if multiple match)
+#             matched_k_all = False
+#             for k in range(0, 9):
+#                 if pattern_k_all[k].match(region_seq):
+#                     sequences_k_all[k].append(region_seq)
+#                     matched_k_all = True
+#                     break
+
+#             # ELSE is defined by NOT being found in ANY k_all
+#             if not matched_k_all:
+#                 sequences_else.append(region_seq)
+#                 else_gff_lines.append(line)
+
+#             # Best-class (T in polyA site) classification 
+#             label, m, subs = best_motif_class(region_seq, candidates)
+#             if label is not None:
+#                 best[label].append(region_seq)
+
+#     # Print summary
+#     print(f"Total sequences: {len(sequences_all)}")
+#     for k in range(0, 9):
+#         print(f"pattern_{k}_all matches: {len(sequences_k_all[k])}")
+
+#     print("Best-class matches:")
+#     for k in range(0, 9):
+#         print(f"  gap{k}: {len(best[f'gap{k}'])}")
+#     print(f"  4a: {len(best['4a'])}")
+#     print(f"  4b: {len(best['4b'])}")
+#     print(f"  4c: {len(best['4c'])}")
+#     print(f"else (no match): {len(sequences_else)}")
+
+#     return sequences_all, sequences_else, else_gff_lines, best, sequences_k_all
+
+
+# def save_logo_logomaker(sequences, output_prefix):
+#     if not sequences:
+#         print(f"No sequences for {output_prefix}, skipping logo.")
+#         return
+
+#     info_df = logomaker.alignment_to_matrix(sequences, to_type="information")
+
+#     plt.figure(figsize=(max(2, len(info_df) / 3), 3))
+#     logo = logomaker.Logo(info_df, color_scheme="classic")
+#     logo.style_spines(visible=False)
+#     logo.style_spines(spines=["left", "bottom"], visible=True)
+#     logo.ax.set_ylabel("bits")
+#     logo.ax.set_ylim([0, 2.0])
+#     plt.title(f"Sequence Logo: {output_prefix}")
+#     plt.tight_layout()
+#     plt.savefig(output_prefix + ".png", dpi=200)
+#     plt.close()
+
+
+# def main():
+#     args = parse_args()
+
+#     seq_all, seq_else, else_gff_lines, best, sequences_k_all = extract_polyA_sequences(
+#         gff3_in=args.gff3_in,
+#         fasta_file=args.fasta_file,
+#         flank=args.flank
+#     )
+
+#     # Logos: overall + else
+#     save_logo_logomaker(seq_all, args.out_all)
+#     save_logo_logomaker(seq_else, args.out_else)
+
+#     # Logos: best-class
+#     save_logo_logomaker(best["gap0"], args.out_0)
+#     save_logo_logomaker(best["gap1"], args.out_1)
+#     save_logo_logomaker(best["gap2"], args.out_2)
+#     save_logo_logomaker(best["gap3"], args.out_3)
+#     save_logo_logomaker(best["gap4"], args.out_4)
+#     save_logo_logomaker(best["gap5"], args.out_5)
+#     save_logo_logomaker(best["gap6"], args.out_6)
+#     save_logo_logomaker(best["gap7"], args.out_7)
+#     save_logo_logomaker(best["gap8"], args.out_8)
+#     save_logo_logomaker(best["4a"], args.out_4a)
+#     save_logo_logomaker(best["4b"], args.out_4b)
+#     save_logo_logomaker(best["4c"], args.out_4c)
+
+#     # Logos: pattern_k_all (k=0..8)
+#     save_logo_logomaker(sequences_k_all[0], args.out_0_all)
+#     save_logo_logomaker(sequences_k_all[1], args.out_1_all)
+#     save_logo_logomaker(sequences_k_all[2], args.out_2_all)
+#     save_logo_logomaker(sequences_k_all[3], args.out_3_all)
+#     save_logo_logomaker(sequences_k_all[4], args.out_4_all)
+#     save_logo_logomaker(sequences_k_all[5], args.out_5_all)
+#     save_logo_logomaker(sequences_k_all[6], args.out_6_all)
+#     save_logo_logomaker(sequences_k_all[7], args.out_7_all)
+#     save_logo_logomaker(sequences_k_all[8], args.out_8_all)
+
+#     # Write ELSE GFF3
+#     with open(args.gff3_else, "w") as f:
+#         for gff_line in else_gff_lines:
+#             f.write(gff_line + "\n")
+
+
+# if __name__ == "__main__":
+#     main()
 
 
 #FOR NON-STOP ST2:

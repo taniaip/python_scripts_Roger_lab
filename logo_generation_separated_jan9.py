@@ -51,6 +51,32 @@ Dependencies:
 
 Author: Tania Iranpour
 """
+
+# Sequence Logo for All PolyA Sites in ST2 (n=5597)
+# Sequence Logo for PolyA Sites with no gaps in ST2 (n=14)
+# Sequence Logo for PolyA Sites with 1-nt gap in ST2 (n=13)
+# Sequence Logo for PolyA Sites with 2-nt gaps in ST2 (n=28)
+# Sequence Logo for PolyA Sites with 3-nt gaps in ST2 (n=293)
+# Sequence Logo for PolyA Sites with 4-nt gaps in ST2 (n=3933)
+# Sequence Logo for PolyA Sites with 5-nt gaps in ST2 (n=96)
+# Sequence Logo for PolyA Sites with 6-nt gaps in ST2 (n=28)
+# Sequence Logo for PolyA Sites with 7-nt gaps in ST2 (n=14)
+# Sequence Logo for PolyA Sites with 8-nt gaps in ST2 (n=8)
+# Sequence Logo for Uncategorized PolyA Sites in ST2 (n=1170)
+
+
+# Sequence Logo for All PolyA Sites in ST7B (n=5103)
+# Sequence Logo for PolyA Sites with no gaps in ST7B (n=129)
+# Sequence Logo for PolyA Sites with 1-nt gap in ST7B (n=57)
+# Sequence Logo for PolyA Sites with 2-nt gaps in ST7B (n=86)
+# Sequence Logo for PolyA Sites with 3-nt gaps in ST7B (n=357)
+# Sequence Logo for PolyA Sites with 4-nt gaps in ST7B (n=3295)
+# Sequence Logo for PolyA Sites with 5-nt gaps in ST7B (n=100)
+# Sequence Logo for PolyA Sites with 6-nt gaps in ST7B (n=13)
+# Sequence Logo for PolyA Sites with 7-nt gaps in ST7B (n=14)
+# Sequence Logo for PolyA Sites with 8-nt gaps in ST7B (n=11)
+# Sequence Logo for Uncategorized PolyA Sites in ST7B (n=1041)
+
 ###################################   FOR ST2    ###############################################
 # Total sequences: 5597
 # pattern_0_all matches: 14

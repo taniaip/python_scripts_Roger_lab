@@ -1,0 +1,1 @@
+gffread -y protein_seq.faa -g genome.fasta geneAnnotation.gff3

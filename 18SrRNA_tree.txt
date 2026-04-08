@@ -1,0 +1,19 @@
+barrnap --kingdom euk genome.fasta > rrna_strainName.gff
+
+grep '18S' rrna_strainName.gff > 18S_starinName.gff
+
+bedtools getfasta -fi genome.fasta -bed 18S_strainName.gff -fo 18S_strainName.fasta
+
+Then pick one of the 18S rRNAs for each strain and put them all together in a fasta file (18S_all.fasta).
+
+mafft --adjustdirection --maxiterate 1000 --localpair 18S_all.fasta > 18SrRNA_aligned_direction.fasta
+
+Copy the output file into mafft website and getthe NJ tree + bootsraps.
+OR for iqtree:
+iqtree -s 18SrRNA_aligned_direction.fasta -m GTR+G4 -bb 1000 -alrt 1000
+
+
+
+
+
+
